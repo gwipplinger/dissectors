@@ -125,7 +125,10 @@ local sci_src_id            = ProtoField.string("sci.src_id", "Sender Identifier
 local sci_dest_id           = ProtoField.string("sci.dest_id", "Receiver Identifier")
 local sci_btp_version       = ProtoField.uint8("sci.btp_version", "BTP Version")
 local sci_btp_version_2     = ProtoField.uint8("sci.btp_version", "BTP Version in Subsystem")
-local sci_btp_version_cmp   = ProtoField.uint8("sci.btp_version_cmp", "Result of BTP Version Comparison")
+local sci_btp_version_cmp   = ProtoField.uint8("sci.btp_version_cmp", "Result of BTP Version Comparison", base.HEX, {
+    [0x01] = "PDI-Versions do not match",
+    [0x02] = "PDI-Versions match"
+})
 local sci_crc_length        = ProtoField.uint8("sci.crc_length", "Length of Check Code")
 local sci_crc               = ProtoField.uint64("sci.crc", "Check Code")
 local sci_nd1               = ProtoField.uint8("sci.nd1", "Basic Aspect Type", base.HEX, {
@@ -175,8 +178,17 @@ local sci_nd9               = ProtoField.uint8("sci.nd9", "Signal Aspect Intenti
     [0xFF] = "Indicated to be dark"
 })
 local sci_nd10              = ProtoField.uint8("sci.nd10", "Luminosity")
-local sci_gate              = ProtoField.uint8("sci.gate", "Point Position")
-local sci_gate_2            = ProtoField.uint8("sci.gate_2", "Point Position")
+
+
+local sci_p_position_types = {
+    [0x01] = "Right",
+    [0x02] = "Left",
+    [0x03] = "No End",
+    [0x04] = "Trailed"
+}
+
+local sci_gate              = ProtoField.uint8("sci.gate", "Point Position", base.HEX, sci_p_position_types)
+local sci_gate_2            = ProtoField.uint8("sci.gate_2", "Point Position", base.HEX, sci_p_position_types)
 
 p_sci.fields = {
     -- sci packet
@@ -236,7 +248,7 @@ function p_sci.dissector(buf, pktinfo, root)
             position = position + 2
             -- add sci packet
             local sci_type = buf:range(position, 1):le_uint()
-            local mtype = buf:range(position + 1, 2):uint()
+            local mtype = buf:range(position + 1, 2):le_uint()
             sci_sub:add(sci_protocol_type, buf:range(position, 1))
             if (sci_type == 0x30) then
                 sci_sub:add_le(sci_ls_message_type, buf:range(position + 1, 2))
