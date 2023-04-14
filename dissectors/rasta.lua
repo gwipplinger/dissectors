@@ -259,6 +259,12 @@ function p_rasta.dissector(buf, pktinfo, root)
         if pcall(function () Dissector.get("sci") end) then
             Dissector.get("sci"):call(buf:range(36, data_length - p_rasta.prefs.safety_code_len):tvb(), pktinfo, root)
         end
+
+        -- call ocmux-dissector if possible
+        if pcall(function () Dissector.get("ocmux") end) then
+            Dissector.get("ocmux"):call(buf:range(36, data_length - p_rasta.prefs.safety_code_len):tvb(), pktinfo, root)
+        end
+
     elseif (msg_type:le_uint() == 6216) then
         -- disconnect request message
         safety:add_le(safety_detailed, buf:range(36, 2))
